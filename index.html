@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .active{
+            background-color: #bbbbbb;
+        }
+    </style>
+</head>
+<body>
+    <!--宿主文件-->
+    <div id="app">
+        <!--插值文本-->
+        <h2>{{ title }}</h2>
+
+        <!--用户输入-->
+        <p>
+            <input type="text" v-model="course" @keydown.enter="addCourse">
+            {{course}}
+            <button @click="addCourse">新增</button>
+        </p>
+        
+        <!--条件渲染-->
+        <p v-if="courses.length===0">没有课程</p>
+
+        <!--列表渲染-->
+        <!-- <div v-for="c in courses" :key="c" :class="{active: selectCourse==c}" @click="selectCourse=c;">
+            {{ c }}
+        </div> -->
+
+        <!--style-->
+        <div class="course-list" v-else>
+            <div v-for="c in courses" :key="c" :style="{backgroundColor: selectCourse===c?'#bbbbbb':'transparent'}" @click="selectCourse=c;">
+                {{ c }}
+            </div>
+        </div>
+        
+        
+    </div>
+    <script src="vue.js"></script>
+    <script>
+        //创建vue实例
+        const app=new Vue({
+            el:'#app',
+            data() {
+                return {
+                    title:'开课吧购物车',
+                    course:'',
+                    selectCourse:'',
+                    courses:['web全栈','web高级']
+                }
+            },
+            methods: {
+                addCourse(){
+                    this.courses.push(this.course)
+                    this.course=''
+                }
+            },
+            computed: {
+                
+            },
+        });
+
+        
+        console.log(app.$options.render)
+        // setTimeout(() => {
+        //     app.title="miu~~"
+        // }, 1000);
+    </script>
+</body>
+</html>

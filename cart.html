@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .active{
+            background-color: #bbbbbb;
+        }
+        .message-box{
+            background-color: green;
+        }
+        .messagebox-close{
+            float: right;
+        }
+    </style>
+</head>
+<body>
+    <!--宿主文件-->
+    <div id="app">
+        <!--消息弹框-->
+        <message :show.sync="show" >
+
+                <strong>恭喜！</strong> 新建课程成功 
+             
+            <!-- <template v-slot:close> <button value="X"></button></template> -->
+            
+        </message>
+
+        <!--插值文本-->
+        <h2>{{ title }}</h2>
+
+        <!--用户输入-->
+        <!-- <p>
+            <input type="text" v-model="course" @keydown.enter="addCourse">
+            {{course}}
+            <button @click="addCourse">新增</button>
+        </p> -->
+        <course-add v-model="course" @add-course="addCourse"></course-add>
+        
+        <!--条件渲染-->
+        <p v-if="courses.length===0">没有任何课程信息</p>
+
+        <!--列表渲染-->
+        <!-- <div v-for="c in courses" :key="c" :class="{active: selectCourse==c}" @click="selectCourse=c;">
+            {{ c }}
+        </div> -->
+
+        <!--style-->
+        <!-- <div class="course-list" v-else>
+            <div v-for="c in courses" :key="c" :style="{backgroundColor: selectCourse===c?'#bbbbbb':'transparent'}" @click="selectCourse=c;">
+                {{ c }}
+            </div>
+        </div> -->
+        
+        <course-list :courses="courses"></course-list>
+
+        <!--课程总数-->
+        <p>
+            <!--表达式-->
+            <!-- 课程总数:{{courses.length+'门'}} -->
+            <!--计算属性-->
+            <!-- 课程总数:{{total}} -->
+            <!--监听器-->
+            课程总数:{{total}}
+        </p>
+    
+    
+        
+    </div>
+    <script src="vue.js"></script>
+    <script>
+        //弹窗组件
+        Vue.component('message',{
+            props:['show'],
+            template:`
+            <div v-if="show" class='message-box'>
+                <slot></slot>
+                <span class="messagebox-close" @click="$emit('update:show',false)">x</span>
+            </div>
+            `
+        });
+        //课程新增组件
+        Vue.component('course-add',{
+            props:['value'],
+            template:`
+                <div>
+                    <p>
+                        <input :value='value' type="text" @input="onInput" @keydown.enter="addCourse"  >
+                        {{value}}
+                        <button @click="addCourse">新增</button>
+                    </p>
+                </div>
+            `,
+            methods:{
+                addCourse(){
+                    this.$emit('add-course')
+                },
+                
+                onInput(e){
+                    this.$emit('input',e.target.value)
+                }
+            }
+        });
+
+        //课程列表组件
+        Vue.component('course-list',{
+            data(){
+                return{
+                    selectCourse:''
+                }
+            },
+            props:{
+                courses:{
+                    type:Array,
+                    default:[]
+                }
+            },
+            template:`
+            <!--style-->
+            <div class="course-list" v-else>
+                <div v-for="c in courses" :key="c" :style="{backgroundColor: selectCourse===c?'#bbbbbb':'transparent'}" @click="selectCourse=c;">
+                    {{ c }}
+                </div>
+            </div>
+            `
+        });
+        //创建vue实例
+        const app=new Vue({
+            el:'#app',
+            data() {
+                return {
+                    title:'开课吧购物车',
+                    course:'',
+                    courses:['web全栈','web高级'],
+                    show:false
+                }
+            },
+            methods: {
+                addCourse(){
+                    this.courses.push(this.course)
+                    this.course=''
+                    this.show=true
+                }
+            },
+            computed: {
+                total() {
+                    return this.courses.length+'门'
+                }
+            },
+            watch: {
+                courses: {
+                    immediate: true,
+                    // deep: true,
+                    handler(newValue, oldValue) {
+                        total=newValue.length+'门'
+                    }
+                }
+            },
+        });
+
+        
+        console.log(app.$options.render)
+        // setTimeout(() => {
+        //     app.title="miu~~"
+        // }, 1000);
+    </script>
+</body>
+</html>
