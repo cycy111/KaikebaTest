@@ -14,22 +14,43 @@
         .messagebox-close{
             float: right;
         }
+        .success{
+            background-color: lightgreen;
+            border: 1px solid green;
+        }
+        .warning{
+            background-color: #f66;
+            border: 1px solid #d63200;
+        }
     </style>
 </head>
 <body>
     <!--宿主文件-->
     <div id="app">
         <!--消息弹框-->
-        <message :show.sync="show" >
+        <message :show.sync="show" class="success">
+            <template v-slot:title="slotprops">
+                <strong>{{slotprops.subject}}</strong>
+            </template>
+            <template >
+                新建课程成功 !
+            </template>
+        </message>
 
-                <strong>恭喜！</strong> 新建课程成功 
-             
-            <!-- <template v-slot:close> <button value="X"></button></template> -->
-            
+        <message :show.sync="showWarn" class="warning">
+            <template >
+                <strong>请输入课程名称！</strong>
+            </template>
+        
         </message>
 
         <!--插值文本-->
         <h2>{{ title }}</h2>
+
+        <!--批量删除多个消息弹框-->
+        <div class="delmsgbox">
+            <button @click="$bus.$emit('message-close')">清除消息对话框</button>
+        </div>
 
         <!--用户输入-->
         <!-- <p>
@@ -53,7 +74,10 @@
                 {{ c }}
             </div>
         </div> -->
+        <!--批量更新价格-->
+        <input type="text" v-model.number="price"><button @click='batchUpdate'>批量更新价格</button>
         
+        <!--课程列表-->
         <course-list :courses="courses"></course-list>
 
         <!--课程总数-->
@@ -71,15 +95,34 @@
     </div>
     <script src="vue.js"></script>
     <script>
+        //总线
+        Vue.prototype.$bus=new Vue();
+        function getCourses(){
+            return new Promise(
+                resolve => {
+                    setTimeout(() => {
+                        resolve([{name:'web全栈'},{name:'web高级'}]);
+                    }, 2000);
+                }
+            )
+        }
+
         //弹窗组件
         Vue.component('message',{
-            props:['show'],
+            props:['show','showWarn'],
             template:`
-            <div v-if="show" class='message-box'>
+            <div v-if="show" >
+                <slot name="title" subject="标题"></slot>
+                <!--通过slot传入内容-->
                 <slot></slot>
                 <span class="messagebox-close" @click="$emit('update:show',false)">x</span>
             </div>
-            `
+            `,
+            mounted(){
+                this.$bus.$on("message-close",()=>{
+                    this.$emit('update:show',false)
+                })
+            }
         });
         //课程新增组件
         Vue.component('course-add',{
@@ -87,7 +130,7 @@
             template:`
                 <div>
                     <p>
-                        <input :value='value' type="text" @input="onInput" @keydown.enter="addCourse"  >
+                        <input :value='value' type="text" @input="onInput" @keydown.enter="addCourse"  ref="inp" >
                         {{value}}
                         <button @click="addCourse">新增</button>
                     </p>
@@ -101,6 +144,9 @@
                 onInput(e){
                     this.$emit('input',e.target.value)
                 }
+            },
+            mounted () {
+                this.$refs.inp.focus();
             }
         });
 
@@ -115,13 +161,17 @@
                 courses:{
                     type:Array,
                     default:[]
+                },
+                price:{
+                    type:Number,
+                    default:0
                 }
             },
             template:`
             <!--style-->
             <div class="course-list" v-else>
-                <div v-for="c in courses" :key="c" :style="{backgroundColor: selectCourse===c?'#bbbbbb':'transparent'}" @click="selectCourse=c;">
-                    {{ c }}
+                <div v-for="c in courses" :key="c.name" :style="{backgroundColor: selectCourse===c?'#bbbbbb':'transparent'}" @click="selectCourse=c;">
+                    {{ c.name }}  $ {{c.price}}
                 </div>
             </div>
             `
@@ -133,16 +183,31 @@
                 return {
                     title:'开课吧购物车',
                     course:'',
-                    courses:['web全栈','web高级'],
-                    show:false
+                    courses:[],
+                    show:false,
+                    price:0,
+                    showWarn:false
                 }
             },
             methods: {
                 addCourse(){
-                    this.courses.push(this.course)
-                    this.course=''
-                    this.show=true
+                    if(this.course){
+                        this.courses.push({name: this.course})
+                        this.course=''
+                        this.show=true
+                    }
+                    else{
+                        this.showWarn=true
+                    }
+                    
+                },
+                batchUpdate(){
+                    this.courses.forEach(c => {
+                        // c.price=this.price
+                        Vue.set(c,'price',this.price)
+                    });
                 }
+               
             },
             computed: {
                 total() {
@@ -158,6 +223,11 @@
                     }
                 }
             },
+            async created(){
+                this.courses= await getCourses();
+                this.batchUpdate();
+            }
+          
         });
 
         
